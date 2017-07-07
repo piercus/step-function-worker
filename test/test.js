@@ -1,19 +1,34 @@
 const vows = require('vows');
 const assert = require('assert');
-const StepFunctionWorker = require('../index.js')
+const StepFunctionWorker = require('../index.js');
+const AWS = require('aws-sdk');
+const PromiseBlue = require("bluebird");
 
+const stepfunction = new AWS.StepFunctions();
 const workerName = "test worker name";
 const stateMachineName = "test-state-machine";
 
+process.on('uncaughtException', function (err) {
+  console.log(err);
+})
+/*
+{
+  definition: '{"Comment":"An Example State machine using Activity.","StartAt":"FirstState","States":{"FirstState":{"Type":"Task","Resource":"arn:aws:states:eu-central-1:170670752151:activity:test-step-function-worker","TimeoutSeconds":300,"HeartbeatSeconds":60,"Next":"End"}}}',
+  name: 'test-state-machine',
+  roleArn: 'arn:aws:iam::170670752151:role/service-role/StatesExecutionRole-eu-central-1'
+}
+*/
 const stateMachineDefinition = function(options){
   return {
     "Comment": "An Example State machine using Activity.",
     "StartAt": "FirstState",
     "States": {
       "FirstState": {
-        "Type": "Activity",
+        "Type": "Task",
         "Resource": options.activityArn,
-        "Next": "End"
+        "TimeoutSeconds": 300,
+        "HeartbeatSeconds": 60,
+        "End": true
       }
     }
   };
@@ -21,37 +36,49 @@ const stateMachineDefinition = function(options){
 
 const stateMachineRoleArn = process.env.ROLE_ARN;
 if(!stateMachineRoleArn){
-  throw("$ROLE_ARN should be defined to run this test");
+  throw(new Error("$ROLE_ARN should be defined to run this test"));
 }
 
 var stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
 
 var before = function(){
-  return stepFunctionPromises.createActivity({
+
+  var context = this;
+
+  return stepFunctionPromises.createActivityAsync({
     name : 'test-step-function-worker'
-  }).then(function(data){
+  }).bind(context).then(function(data){
     this.activityArn = data.activityArn
   }).then(function(){
     var params = {
-      definition: stateMachineDefinition({ activityArn : this.activityArn }), /* required */
+      definition: JSON.stringify(stateMachineDefinition({ activityArn : this.activityArn })), /* required */
       name: stateMachineName, /* required */
       roleArn: stateMachineRoleArn /* required */
     };
-    return stepFunctionPromises.createStateMachine(params);
 
+    return stepFunctionPromises.createStateMachineAsync(params)
   }).then(function(data){
     this.stateMachineArn = data.stateMachineArn
-  });
+  }).return(context);
 };
 
 var after = function(){
-  return stepFunctionPromises.deleteActivity({
-    activityArn : this.activityArn
-  }).then(function(){
-    stepFunctionPromises.deleteStateMachine({
+  let p1, p2;
+  if(this.activityArn){
+    p1 = stepFunctionPromises.deleteActivityAsync({
+      activityArn : this.activityArn
+    })
+  } else {
+    p1 = PromiseBlue.resolve()
+  }
+  if(this.stateMachineArn){
+    p2 = stepFunctionPromises.deleteStateMachineAsync({
       stateMachineArn: this.stateMachineArn
-    });
-  });
+    })
+  } else {
+    p2 = PromiseBlue.resolve()
+  }
+  return PromiseBlue.all([p1,p2])
 };
 
 
@@ -59,7 +86,7 @@ const thenable = new PromiseBlue(function(resolve, reject){
   return function(event, callback){
 
   }
-};
+});
 
 const sentInput = {"foo" : "bar"};
 const sentOutput = {"foo2" : "bar2"};
@@ -67,6 +94,7 @@ let receivedInput, receivedOutput;
 
 const fn = function(event, callback, heartbeat){
   setTimeout(function(){
+    //assert.equal(event, sentInput);
     callback(null, sentOutput)
   }, 1000);
 };
@@ -79,11 +107,13 @@ var buildSuite = function(options){
   return vows.describe('Step function Activity Worker').addBatch({
     'Step function with callback worker': {
       topic: function(){
+
         var worker = new StepFunctionWorker({
           activityArn,
           workerName,
           fn
         });
+        
         worker.on('task', function(task){
           // task.taskToken
           // task.input
@@ -107,7 +137,7 @@ var buildSuite = function(options){
         });
 
         worker.on('error', function(err){
-          console.log("Error ", err)
+          console.log("error ", err)
         });
 
         return worker
@@ -115,57 +145,70 @@ var buildSuite = function(options){
 
       "task event": {
         topic : function(worker){
+          var self = this;
           var params = {
             stateMachineArn: stateMachineArn,
-            input: sentInput
+            input: JSON.stringify(sentInput)
           };
 
           worker.once('task', function(task){
             // task.taskToken
             // task.input
-            this.callback(null, {task, worker});
+            console.log("task 1")
+            self.callback(null, {task, worker, taskTokenInput : task.taskToken});
           });
-
-          stepFunctionPromises.startExecution(params)
+          stepFunctionPromises.startExecutionAsync(params)
         },
 
         "data contains input and taskToken": function(res){
           const task = res.task;
-          assert.equal(task.input, sentInput);
+          assert.deepEqual(task.input, sentInput);
           assert.equal(typeof(task.taskToken), "string");
-        }
-
+        },
         "success event": {
           topic : function(res){
-            const worker = res.worker;
-
-            var params = {
-              stateMachineArn: stateMachineArn,
-              input: sentInput
-            };
-
-            let taskTokenInput;
-
-            worker.once('task', function(task){
-              // task.taskToken
-              // task.input
-              taskTokenInput = task.taskToken;
-            });
-
-            worker.once('success', function(out){
-              this.callback(null, {out, taskTokenInput});
-            });
-
-            stepFunctionPromises.startExecution(params)
+            res.worker.once('success', function(out){
+              this.callback(null, {worker : res.worker, out, taskTokenInput : res.taskTokenInput});
+            }.bind(this));
           },
-
           "taskToken corresponds": function(res){
             assert.equal(res.out.taskToken, res.taskTokenInput);
+          },
+          "2nd task" : {
+            topic : function(res){
+              const worker = res.worker;
+
+              var params = {
+                stateMachineArn: stateMachineArn,
+                input: JSON.stringify(sentInput)
+              };
+
+              let taskTokenInput;
+
+              worker.once('task', function(task){
+                // task.taskToken
+                // task.input
+                console.log("task 2")
+                taskTokenInput = task.taskToken;
+              });
+
+              worker.once('success', function(out){
+                console.log("success 2")
+                this.callback(null, {out, taskTokenInput});
+              }.bind(this));
+              console.log("execute")
+              stepFunctionPromises.startExecutionAsync(params);
+            },
+
+            "taskToken corresponds": function(res){
+              assert.equal(res.out.taskToken, res.taskTokenInput);
+            }
           }
+
         }
       }
     }
-  }).addBatch({
+  })/*.addBatch({
     'Step function with callback worker': {
       topic: function(){
         var worker = new StepFunctionWorker({
@@ -206,7 +249,7 @@ var buildSuite = function(options){
         topic : function(worker){
           var params = {
             stateMachineArn: stateMachineArn,
-            input: sentInput
+            input: JSON.stringify(sentInput)
           };
 
           worker.once('task', function(task){
@@ -215,14 +258,14 @@ var buildSuite = function(options){
             this.callback(null, {task, worker});
           });
 
-          stepFunctionPromises.startExecution(params)
+          stepFunctionPromises.startExecutionAsync(params)
         },
 
         "data contains input and taskToken": function(res){
           const task = res.task;
           assert.equal(task.input, sentInput);
           assert.equal(typeof(task.taskToken), "string");
-        }
+        },
 
         "success event": {
           topic : function(res){
@@ -230,7 +273,7 @@ var buildSuite = function(options){
 
             var params = {
               stateMachineArn: stateMachineArn,
-              input: sentInput
+              input: JSON.stringify(sentInput)
             };
 
             let taskTokenInput;
@@ -245,7 +288,7 @@ var buildSuite = function(options){
               this.callback(null, {out, taskTokenInput});
             });
 
-            stepFunctionPromises.startExecution(params)
+            stepFunctionPromises.startExecutionAsync(params)
           },
 
           "taskToken corresponds": function(res){
@@ -254,13 +297,13 @@ var buildSuite = function(options){
         }
       }
     }
-  });
+  });*/
 };
 
 PromiseBlue.resolve()
   .bind({})
   .then(before)
-  .then(function(){
+  .then(function(opts){
     var suite = buildSuite(this);
     return PromiseBlue.promisify(suite.run, {context : suite})()
   })

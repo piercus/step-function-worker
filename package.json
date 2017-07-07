@@ -22,5 +22,10 @@
   "bugs": {
     "url": "https://github.com/piercus/step-function-worker/issues"
   },
-  "homepage": "https://github.com/piercus/step-function-worker#readme"
+  "homepage": "https://github.com/piercus/step-function-worker#readme",
+  "devDependencies": {
+    "bluebird": "^3.5.0",
+    "vows": "^0.8.1",
+    "xo": "^0.18.2"
+  }
 }
