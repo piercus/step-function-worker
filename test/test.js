@@ -78,93 +78,182 @@ var buildSuite = function(options){
 
   return vows.describe('Step function Activity Worker').addBatch({
     'Step function with callback worker': {
-        topic: function(){
-          var worker = new StepFunctionWorker({
-            activityArn,
-            workerName,
-            fn
-          });
-          worker.on('task', function(task){
+      topic: function(){
+        var worker = new StepFunctionWorker({
+          activityArn,
+          workerName,
+          fn
+        });
+        worker.on('task', function(task){
+          // task.taskToken
+          // task.input
+          console.log("task ", task.input)
+        });
+        worker.on('failure', function(failure){
+          // out.error
+          // out.taskToken
+          console.log("Failure :",failure.error)
+        });
+
+        worker.on('heartbeat', function(beat){
+          // out.taskToken
+          console.log("Heartbeat");
+        });
+
+        worker.on('success', function(out){
+          // out.output
+          // out.taskToken
+          console.log("Success :",out.output)
+        });
+
+        worker.on('error', function(err){
+          console.log("Error ", err)
+        });
+
+        return worker
+      },
+
+      "task event": {
+        topic : function(worker){
+          var params = {
+            stateMachineArn: stateMachineArn,
+            input: sentInput
+          };
+
+          worker.once('task', function(task){
             // task.taskToken
             // task.input
-            console.log("task ", task.input)
-          });
-          worker.on('failure', function(failure){
-            // out.error
-            // out.taskToken
-            console.log("Failure :",failure.error)
+            this.callback(null, {task, worker});
           });
 
-          worker.on('heartbeat', function(beat){
-            // out.taskToken
-            console.log("Heartbeat");
-          });
-
-          worker.on('success', function(out){
-            // out.output
-            // out.taskToken
-            console.log("Success :",out.output)
-          });
-
-          worker.on('error', function(err){
-            console.log("Error ", err)
-          });
-
-          return worker
+          stepFunctionPromises.startExecution(params)
         },
 
-        "task event": {
-          topic : function(worker){
+        "data contains input and taskToken": function(res){
+          const task = res.task;
+          assert.equal(task.input, sentInput);
+          assert.equal(typeof(task.taskToken), "string");
+        }
+
+        "success event": {
+          topic : function(res){
+            const worker = res.worker;
+
             var params = {
               stateMachineArn: stateMachineArn,
               input: sentInput
             };
 
+            let taskTokenInput;
+
             worker.once('task', function(task){
               // task.taskToken
               // task.input
-              this.callback(null, {task, worker});
+              taskTokenInput = task.taskToken;
+            });
+
+            worker.once('success', function(out){
+              this.callback(null, {out, taskTokenInput});
             });
 
             stepFunctionPromises.startExecution(params)
           },
 
-          "data contains input and taskToken": function(res){
-            const task = res.task;
-            assert.equal(task.input, sentInput);
-            assert.equal(typeof(task.taskToken), "string");
-          }
-
-          "success event": {
-            topic : function(res){
-              const worker = res.worker;
-
-              var params = {
-                stateMachineArn: stateMachineArn,
-                input: sentInput
-              };
-
-              let taskTokenInput;
-
-              worker.once('task', function(task){
-                // task.taskToken
-                // task.input
-                taskTokenInput = task.taskToken;
-              });
-
-              worker.once('success', function(out){
-                this.callback(null, {out, taskTokenInput});
-              });
-
-              stepFunctionPromises.startExecution(params)
-            },
-
-            "taskToken corresponds": function(res){
-              assert.equal(res.out.taskToken, res.taskTokenInput);
-            }
+          "taskToken corresponds": function(res){
+            assert.equal(res.out.taskToken, res.taskTokenInput);
           }
         }
-    },
+      }
+    }
+  }).addBatch({
+    'Step function with callback worker': {
+      topic: function(){
+        var worker = new StepFunctionWorker({
+          activityArn,
+          workerName,
+          thenable
+        });
+        worker.on('task', function(task){
+          // task.taskToken
+          // task.input
+          console.log("task ", task.input)
+        });
+        worker.on('failure', function(failure){
+          // out.error
+          // out.taskToken
+          console.log("Failure :",failure.error)
+        });
+
+        worker.on('heartbeat', function(beat){
+          // out.taskToken
+          console.log("Heartbeat");
+        });
+
+        worker.on('success', function(out){
+          // out.output
+          // out.taskToken
+          console.log("Success :",out.output)
+        });
+
+        worker.on('error', function(err){
+          console.log("Error ", err)
+        });
+
+        return worker
+      },
+
+      "task event": {
+        topic : function(worker){
+          var params = {
+            stateMachineArn: stateMachineArn,
+            input: sentInput
+          };
+
+          worker.once('task', function(task){
+            // task.taskToken
+            // task.input
+            this.callback(null, {task, worker});
+          });
+
+          stepFunctionPromises.startExecution(params)
+        },
+
+        "data contains input and taskToken": function(res){
+          const task = res.task;
+          assert.equal(task.input, sentInput);
+          assert.equal(typeof(task.taskToken), "string");
+        }
+
+        "success event": {
+          topic : function(res){
+            const worker = res.worker;
+
+            var params = {
+              stateMachineArn: stateMachineArn,
+              input: sentInput
+            };
+
+            let taskTokenInput;
+
+            worker.once('task', function(task){
+              // task.taskToken
+              // task.input
+              taskTokenInput = task.taskToken;
+            });
+
+            worker.once('success', function(out){
+              this.callback(null, {out, taskTokenInput});
+            });
+
+            stepFunctionPromises.startExecution(params)
+          },
+
+          "taskToken corresponds": function(res){
+            assert.equal(res.out.taskToken, res.taskTokenInput);
+          }
+        }
+      }
+    }
   });
 };
 
