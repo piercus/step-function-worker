@@ -1,0 +1,26 @@
+{
+  "name": "step-function-worker",
+  "version": "0.0.1",
+  "description": "Easy aws step-function worker in node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "xo && node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/piercus/step-function-worker.git"
+  },
+  "keywords": [
+    "step-function",
+    "worker",
+    "aws",
+    "stepfunction",
+    "activity"
+  ],
+  "author": "Pierre Colle <piercus@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/piercus/step-function-worker/issues"
+  },
+  "homepage": "https://github.com/piercus/step-function-worker#readme"
+}
