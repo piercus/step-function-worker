@@ -1,1 +1,1 @@
-module.exports = require("./lib/worker.js");
+module.exports = require('./lib/worker.js');
