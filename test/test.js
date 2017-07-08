@@ -287,9 +287,9 @@ const buildSuite = function (options) {
             // task.input
             // task.workerName
 						count++;
-						console.log(workerName);
-						if (workerNames.indexOf(workerName) === -1) {
-							workerNames.push(workerName);
+						
+						if (workerNames.indexOf(task.workerName) === -1) {
+							workerNames.push(task.workerName);
 						}
 						if (count === 3) {
 							worker.removeListener('task', onTask);
@@ -312,10 +312,10 @@ const buildSuite = function (options) {
 						let count = 0;
 						const workerNames = [];
 
-						const onSuccess = function () {
+						const onSuccess = function (out) {
 							count++;
-							if (workerNames.indexOf(workerName) === -1) {
-								workerNames.push(workerName);
+							if (workerNames.indexOf(out.workerName) === -1) {
+								workerNames.push(out.workerName);
 							}
 							if (count === 3) {
 								worker.removeListener('success', onSuccess);

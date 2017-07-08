@@ -6,6 +6,7 @@
   "scripts": {
     "test": "xo && node test/test.js"
   },
+  "engines" : { "node" : ">=6.0" },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/piercus/step-function-worker.git"
