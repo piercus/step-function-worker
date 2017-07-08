@@ -9,9 +9,17 @@ npm install step-function-worker
 
 ### Example usage
 
+#### Basic example
+
 ```
 var fn = function(input, cb, heartbeat){
   // do something
+  doSomething(input)
+
+  // call heartbeat sometime to avoid timeout
+  heartbeat()
+
+  // call callback in the end
   cb(null, {"foo" : "bar"}); // output must be compatible with JSON.stringify
 };
 
@@ -21,10 +29,20 @@ var worker = new StepFunctionWorker({
   fn : fn,
   concurrency : 2 // default is 1
 });
+```
+
+#### Close the worker
+
+```
+// when finish close the worker with a callback
+// this closing process may take up to 60 seconds per concurent worker, to close all connections smoothly without loosing any task
+worker.close(function(){
+  process.exit();
+})
 
 ```
 
-### Events
+#### Events
 
 
 ```
@@ -55,3 +73,7 @@ worker.on('error', function(err){
   console.log("error ", err)
 });
 ```
+
+### TO DO
+
+When closing a worker, i feel we cannot abort safely

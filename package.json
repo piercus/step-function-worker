@@ -1,7 +1,7 @@
 {
   "name": "step-function-worker",
   "version": "0.0.1",
-  "description": "Easy aws step-function worker in node.js",
+  "description": "Easy AWS step function activity worker in node.js",
   "main": "index.js",
   "scripts": {
     "test": "xo && node test/test.js"
