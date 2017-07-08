@@ -328,9 +328,18 @@ const buildSuite = function (options) {
 					},
 					'tasks are done in parallel startDate- endDate comparison'(res) {
 						assert.equal(res.workerNames.length, 3);
-						console.log((res.endDate - res.startDate) / 1000);
 						assert((res.endDate - res.startDate) / 1000 < 3);
 						assert((res.endDate - res.startDate) / 1000 > 2);
+					},
+					'close the worker': {
+						topic(res) {
+							res.worker.close(() => {
+								this.callback(null, res.worker);
+							});
+						},
+						'close the worker'(worker) {
+							assert.equal(worker._poolers.length, 0);
+						}
 					}
 				}
 			}
