@@ -328,7 +328,7 @@ const buildSuite = function (options) {
 					},
 					'tasks are done in parallel startDate- endDate comparison'(res) {
 						assert.equal(res.workerNames.length, 3);
-						assert((res.endDate - res.startDate) / 1000 < 3);
+						assert((res.endDate - res.startDate) / 1000 < 3.9);
 						assert((res.endDate - res.startDate) / 1000 > 2);
 					},
 					'close the worker': {
