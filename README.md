@@ -12,7 +12,7 @@ npm install step-function-worker
 
 #### Basic example
 
-```
+```javascript
 var fn = function(input, cb, heartbeat){
   // do something
   doSomething(input)
@@ -34,7 +34,7 @@ var worker = new StepFunctionWorker({
 
 #### Close the worker
 
-```
+```javascript
 // when finish close the worker with a callback
 // this closing process may take up to 60 seconds per concurent worker, to close all connections smoothly without loosing any task
 worker.close(function(){
@@ -45,7 +45,7 @@ worker.close(function(){
 #### Events
 
 
-```
+```javascript
 worker.on('task', function(task){
   // task.taskToken
   // task.input
