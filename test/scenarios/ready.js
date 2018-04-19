@@ -1,14 +1,9 @@
 const test = require('ava').test;
-const AWS = require('aws-sdk');
-const PromiseBlue = require('bluebird');
 const winston = require('winston');
 
 const StepFunctionWorker = require('../../index.js');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
-
-const stepfunction = new AWS.StepFunctions();
-const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
 
 const logger = new winston.Logger({
 	transports: [new winston.transports.Console({
@@ -36,12 +31,9 @@ const context = {};
 const before = createActivity.bind(null, {context, activityName, stateMachineName, workerName});
 const after = cleanUp.bind(null, {context, activityName, stateMachineName, workerName});
 
-const sentInput = {foo: 'bar'};
-
 const fn = function (event, callback, heartbeat) {
 	heartbeat();
 	setTimeout(() => {
-		const err = new Error('custom error');
 		// Assert.equal(event, sentInput);
 		callback(null, event);
 	}, 2000);
@@ -51,13 +43,12 @@ test.before(before);
 
 test.serial('Step function Activity Workerhas a ready event', t => {
 	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
 
 	return new Promise((resolve, reject) => {
 		const worker = new StepFunctionWorker({
 			activityArn,
 			workerName: workerName + '-fn',
-			fn: fn,
+			fn,
 			logger
 		});
 		let ready = false;
@@ -66,14 +57,13 @@ test.serial('Step function Activity Workerhas a ready event', t => {
 			ready = true;
 			resolve();
 		});
-		
-		setTimeout(function(){
-			if(!ready){
+
+		setTimeout(() => {
+			if (!ready) {
 				t.fail();
 				reject();
 			}
-		},1000)
-
+		}, 1000);
 	});
 });
 
