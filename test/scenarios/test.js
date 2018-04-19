@@ -1,9 +1,12 @@
 const test = require('ava').test;
-const AWS = require('aws-sdk');
 const PromiseBlue = require('bluebird');
-const StepFunctionWorker = require('../index.js');
+const AWS = require('aws-sdk');
+const StepFunctionWorker = require('../../index.js');
+const createActivity = require('../utils/create-activity');
+const cleanUp = require('../utils/clean-up');
 
 const stepfunction = new AWS.StepFunctions();
+const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
 const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 1000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 1000);
@@ -18,71 +21,11 @@ process.on('uncaughtException', err => {
 	roleArn: 'arn:aws:iam::170670752151:role/service-role/StatesExecutionRole-eu-central-1'
 }
 */
-const stateMachineDefinition = function (options) {
-	return {
-		Comment: 'An Example State machine using Activity.',
-		StartAt: 'FirstState',
-		States: {
-			FirstState: {
-				Type: 'Task',
-				Resource: options.activityArn,
-				TimeoutSeconds: 300,
-				HeartbeatSeconds: 60,
-				End: true
-			}
-		}
-	};
-};
 
-const stateMachineRoleArn = process.env.ROLE_ARN;
-if (!stateMachineRoleArn) {
-	throw (new Error('$ROLE_ARN should be defined to run this test'));
-}
+const context = {};
 
-const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
-
-let context;
-
-const before = function () {
-	context = {};
-
-	return stepFunctionPromises.createActivityAsync({
-		name: activityName
-	}).bind(context).then(data => {
-		context.activityArn = data.activityArn;
-		context.workerName = workerName;
-	}).then(function () {
-		const params = {
-			definition: JSON.stringify(stateMachineDefinition({activityArn: this.activityArn})), /* Required */
-			name: stateMachineName, /* Required */
-			roleArn: stateMachineRoleArn /* Required */
-		};
-
-		return stepFunctionPromises.createStateMachineAsync(params);
-	}).then(data => {
-		context.stateMachineArn = data.stateMachineArn;
-	}).return(context);
-};
-
-const after = function () {
-	let p1;
-	let p2;
-	if (this.activityArn) {
-		p1 = stepFunctionPromises.deleteActivityAsync({
-			activityArn: this.activityArn
-		});
-	} else {
-		p1 = PromiseBlue.resolve();
-	}
-	if (this.stateMachineArn) {
-		p2 = stepFunctionPromises.deleteStateMachineAsync({
-			stateMachineArn: this.stateMachineArn
-		});
-	} else {
-		p2 = PromiseBlue.resolve();
-	}
-	return PromiseBlue.all([p1, p2]);
-};
+const before = createActivity.bind(null, {context, activityName, stateMachineName, workerName});
+const after = cleanUp.bind(null, context);
 
 const sentInput = {foo: 'bar'};
 const sentOutput = {foo2: 'bar2'};
@@ -200,6 +143,11 @@ test.serial('Step function with 3 concurrent worker', t => {
 			countSuccess++;
 			if (workerNames.indexOf(out.workerName) === -1) {
 				t.fail('workerName should have been seen on task event before');
+			}
+			if (countSuccess === 1) {
+				const report = worker.report();
+				t.is(report.length, 3);
+				t.is(report.filter(p => p.status === 'Task under going'), 2);
 			}
 			if (countSuccess === 3) {
 				worker.removeListener('success', onSuccess);

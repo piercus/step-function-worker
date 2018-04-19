@@ -74,6 +74,5 @@ worker.on('error', function(err){
 });
 ```
 
-### TO DO
+### Documentation
 
-When closing a worker, i feel we cannot abort safely

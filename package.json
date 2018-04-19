@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "xo",
-    "test": "nyc ava test/test.js",
+    "test": "nyc ava test/scenarios/*",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
   "engines": {
@@ -33,6 +33,7 @@
     "bluebird": "^3.5.0",
     "semantic-release": "^15.1.7",
     "vows": "^0.8.1",
+    "winston": "^2.4.1",
     "xo": "^0.18.2"
   },
   "dependencies": {
