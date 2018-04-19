@@ -2,7 +2,7 @@ language: node_js
 node_js:
   - '6'
 install:
-  - npm install -g codecov nyc
+  - npm install -g codecov nyc npx
   - npm install
 
 script:
@@ -11,3 +11,4 @@ script:
 
 after_success:
   - npm run report-coverage
+  - npx -p node@8 -c "npm run semantic-release"
