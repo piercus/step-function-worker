@@ -1,5 +1,4 @@
-const assert = require('assert');
-const vows = require('vows');
+const test = require('ava').test;
 const AWS = require('aws-sdk');
 const PromiseBlue = require('bluebird');
 const StepFunctionWorker = require('../index.js');
@@ -14,9 +13,9 @@ process.on('uncaughtException', err => {
 });
 /*
 {
-  definition: '{"Comment":"An Example State machine using Activity.","StartAt":"FirstState","States":{"FirstState":{"Type":"Task","Resource":"arn:aws:states:eu-central-1:170670752151:activity:test-step-function-worker","TimeoutSeconds":300,"HeartbeatSeconds":60,"Next":"End"}}}',
-  name: 'test-state-machine',
-  roleArn: 'arn:aws:iam::170670752151:role/service-role/StatesExecutionRole-eu-central-1'
+	definition: '{"Comment":"An Example State machine using Activity.","StartAt":"FirstState","States":{"FirstState":{"Type":"Task","Resource":"arn:aws:states:eu-central-1:170670752151:activity:test-step-function-worker","TimeoutSeconds":300,"HeartbeatSeconds":60,"Next":"End"}}}',
+	name: 'test-state-machine',
+	roleArn: 'arn:aws:iam::170670752151:role/service-role/StatesExecutionRole-eu-central-1'
 }
 */
 const stateMachineDefinition = function (options) {
@@ -42,14 +41,16 @@ if (!stateMachineRoleArn) {
 
 const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
 
+let context;
+
 const before = function () {
-	const context = this;
+	context = {};
 
 	return stepFunctionPromises.createActivityAsync({
 		name: activityName
-	}).bind(context).then(function (data) {
-		this.activityArn = data.activityArn;
-		this.workerName = workerName;
+	}).bind(context).then(data => {
+		context.activityArn = data.activityArn;
+		context.workerName = workerName;
 	}).then(function () {
 		const params = {
 			definition: JSON.stringify(stateMachineDefinition({activityArn: this.activityArn})), /* Required */
@@ -58,10 +59,8 @@ const before = function () {
 		};
 
 		return stepFunctionPromises.createStateMachineAsync(params);
-	}).then(function (data) {
-		this.stateMachineArn = data.stateMachineArn;
-	}).then(() => {
-
+	}).then(data => {
+		context.stateMachineArn = data.stateMachineArn;
 	}).return(context);
 };
 
@@ -91,7 +90,7 @@ const sentOutput = {foo2: 'bar2'};
 const fn = function (event, callback, heartbeat) {
 	heartbeat();
 	setTimeout(() => {
-    // Assert.equal(event, sentInput);
+		// Assert.equal(event, sentInput);
 		callback(null, sentOutput);
 	}, 2000);
 };
@@ -99,271 +98,129 @@ const fn = function (event, callback, heartbeat) {
 const fn2 = function (event, callback, heartbeat) {
 	heartbeat();
 	setTimeout(() => {
-    // Assert.equal(event, sentInput);
+		// Assert.equal(event, sentInput);
 		callback(null, Object.assign({}, event, sentOutput));
 	}, 2000);
 };
-// Create a Test Suite
-const buildSuite = function (options) {
-	const activityArn = options.activityArn;
-	const stateMachineArn = options.stateMachineArn;
-	const workerName = options.workerName;
-	let workerGl;
 
-	const suite = vows.describe('Step function Activity Worker').addBatch({
-		'Step function with callback worker': {
-			topic() {
-				const worker = new StepFunctionWorker({
-					activityArn,
-					workerName: workerName + '-fn',
-					fn
-				});
+test.before(before);
 
-				workerGl = worker;
+test('Step function Activity Worker with 2 consecutive tasks', t => {
+	const activityArn = context.activityArn;
+	const stateMachineArn = context.stateMachineArn;
 
-				worker.on('task', task => {
-          // Task.taskToken
-          // task.input
-					console.log('Task ', task.input);
-				});
-				worker.on('failure', failure => {
-          // Out.error
-          // out.taskToken
-					console.log('Failure :', failure.error);
-				});
-
-				worker.on('Heartbeat', () => {
-          // Out.taskToken
-					console.log('Heartbeat');
-				});
-
-				worker.on('Success', out => {
-          // Out.output
-          // out.taskToken
-					console.log('Success :', out.output);
-				});
-
-				worker.on('error', err => {
-					console.log('error ', err);
-				});
-
-				return worker;
-			},
-
-			'task event': {
-				topic(worker) {
-					const self = this;
-					const params = {
-						stateMachineArn,
-						input: JSON.stringify(sentInput)
-					};
-
-					worker.once('task', task => {
-            // Task.taskToken
-            // task.input
-						self.callback(null, {task, worker, taskTokenInput: task.taskToken});
-					});
-
-					stepFunctionPromises.startExecutionAsync(params);
-				},
-
-				'data contains input and taskToken'(res) {
-					const task = res.task;
-					assert.deepEqual(task.input, sentInput);
-					assert.equal(typeof (task.taskToken), 'string');
-				},
-				'success event': {
-					topic(res) {
-						res.worker.once('success', out => {
-							this.callback(null, {worker: res.worker, out, taskTokenInput: res.taskTokenInput});
-						});
-					},
-					'taskToken corresponds'(res) {
-						assert.equal(res.out.taskToken, res.taskTokenInput);
-					},
-					'2nd task': {
-						topic(res) {
-							const worker = res.worker;
-
-							const params = {
-								stateMachineArn,
-								input: JSON.stringify(sentInput)
-							};
-
-							let taskTokenInput;
-
-							worker.once('task', task => {
-                // Task.taskToken
-                // task.input
-								taskTokenInput = task.taskToken;
-							});
-
-							worker.once('success', out => {
-								this.callback(null, {out, taskTokenInput, worker});
-							});
-
-							stepFunctionPromises.startExecutionAsync(params);
-						},
-
-						'taskToken corresponds'(res) {
-							assert.equal(res.out.taskToken, res.taskTokenInput);
-						},
-						'close the worker': {
-							topic(res) {
-								res.worker.close(() => {
-									this.callback(null, res.worker);
-								});
-							},
-							'close the worker'(worker) {
-								assert.equal(worker._poolers.length, 0);
-							}
-						}
-					}
-
-				}
-			}
-		}
-	}).addBatch({
-		'Step function with 3 concurrent worker': {
-			topic() {
-				const worker = new StepFunctionWorker({
-					activityArn,
-					workerName: workerName + '-concurrent',
-					fn: fn2,
-					concurrency: 3
-				});
-				workerGl = worker;
-
-				worker.on('task', task => {
-          // Task.taskToken
-          // task.input
-					console.log('task ', task.input);
-				});
-				worker.on('failure', failure => {
-          // Out.error
-          // out.taskToken
-					console.log('Failure :', failure.error);
-				});
-
-				worker.on('heartbeat', () => {
-          // Out.taskToken
-					console.log('Heartbeat');
-				});
-
-				worker.on('success', out => {
-          // Out.output
-          // out.taskToken
-					console.log('Success :', out.output);
-				});
-
-				worker.on('error', err => {
-					console.log('error ', err);
-				});
-
-				return worker;
-			},
-
-			'task event': {
-				topic(worker) {
-					const self = this;
-					const params1 = {
-						stateMachineArn,
-						input: JSON.stringify({inputNumber: '0'})
-					};
-					const params2 = {
-						stateMachineArn,
-						input: JSON.stringify({inputNumber: '1'})
-					};
-					const params3 = {
-						stateMachineArn,
-						input: JSON.stringify({inputNumber: '2'})
-					};
-					let count = 0;
-					const workerNames = [];
-					const startDate = new Date();
-
-					const onTask = function (task) {
-            // Task.taskToken
-            // task.input
-            // task.workerName
-						count++;
-
-						if (workerNames.indexOf(task.workerName) === -1) {
-							workerNames.push(task.workerName);
-						}
-						if (count === 3) {
-							worker.removeListener('task', onTask);
-							self.callback(null, {task, worker, taskTokenInput: task.taskToken, workerNames, startDate});
-						}
-					};
-
-					worker.on('task', onTask);
-
-					stepFunctionPromises.startExecutionAsync(params1);
-					stepFunctionPromises.startExecutionAsync(params2);
-					stepFunctionPromises.startExecutionAsync(params3);
-				},
-				'all workzers have worked corresponds'(res) {
-					assert.equal(res.workerNames.length, 3);
-				},
-				'success event': {
-					topic(res) {
-						const worker = res.worker;
-						let count = 0;
-						const workerNames = [];
-
-						const onSuccess = function (out) {
-							count++;
-							if (workerNames.indexOf(out.workerName) === -1) {
-								workerNames.push(out.workerName);
-							}
-							if (count === 3) {
-								worker.removeListener('success', onSuccess);
-								const endDate = new Date();
-								this.callback(null, {worker, workerNames, startDate: res.startDate, endDate});
-							}
-						}.bind(this);
-
-						res.worker.on('success', onSuccess);
-					},
-					'tasks are done in parallel startDate- endDate comparison'(res) {
-						assert.equal(res.workerNames.length, 3);
-						assert((res.endDate - res.startDate) / 1000 < 3.9);
-						assert((res.endDate - res.startDate) / 1000 > 2);
-					},
-					'close the worker': {
-						topic(res) {
-							res.worker.close(() => {
-								this.callback(null, res.worker);
-							});
-						},
-						'close the worker'(worker) {
-							assert.equal(worker._poolers.length, 0);
-						}
-					}
-				}
-			}
-		}
+	const worker = new StepFunctionWorker({
+		activityArn,
+		workerName: workerName + '-fn',
+		fn
 	});
 
-	suite.close = function () {
-		if (workerGl) {
-			return PromiseBlue.promisify(workerGl.close, {context: workerGl})();
-		}
-		return PromiseBlue.resolve();
-	};
-	return suite;
-};
-
-PromiseBlue.resolve()
-  .bind({})
-  .then(before)
-  .then(function () {
-	const suite = buildSuite(this);
-	return PromiseBlue.promisify(suite.run, {context: suite})().timeout(200000).catch(err => {
-		return suite.close().then(() => {
-			return PromiseBlue.reject(err);
+	return new Promise((resolve, reject) => {
+		let expectedTaskToken;
+		const params = {
+			stateMachineArn,
+			input: JSON.stringify(sentInput)
+		};
+		worker.once('task', task => {
+			// Task.taskToken
+			// task.input
+			t.deepEqual(task.input, sentInput);
+			t.is(typeof (task.taskToken), 'string');
+			expectedTaskToken = task.taskToken;
 		});
+		worker.on('error', reject);
+		worker.once('success', out => {
+			t.is(out.taskToken, expectedTaskToken);
+
+			let expectedTaskToken2;
+			worker.once('task', task => {
+				// Task.taskToken
+				// task.input
+				expectedTaskToken2 = task.taskToken;
+			});
+
+			worker.once('success', out => {
+				t.is(out.taskToken, expectedTaskToken2);
+				worker.close(() => {
+					resolve();
+				});
+			});
+
+			stepFunctionPromises.startExecutionAsync(params);
+		});
+
+		stepFunctionPromises.startExecutionAsync(params);
 	});
-})
-  .finally(after);
+});
+
+test('Step function with 3 concurrent worker', t => {
+	const activityArn = context.activityArn;
+	const stateMachineArn = context.stateMachineArn;
+
+	const worker = new StepFunctionWorker({
+		activityArn,
+		workerName: workerName + '-concurrent',
+		fn: fn2,
+		concurrency: 3
+	});
+	const params1 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '0'})
+	};
+	const params2 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '1'})
+	};
+	const params3 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '2'})
+	};
+
+	return new Promise((resolve, reject) => {
+		let countTask = 0;
+		let countSuccess = 0;
+		const workerNames = [];
+		const startDate = new Date();
+		const onTask = function (task) {
+			// Task.taskToken
+			// task.input
+			// task.workerName
+			countTask++;
+
+			if (workerNames.indexOf(task.workerName) === -1) {
+				workerNames.push(task.workerName);
+			}
+			if (countTask === 3) {
+				worker.removeListener('task', onTask);
+				t.is(workerNames.length, 3);
+			}
+		};
+
+		const onSuccess = function (out) {
+			countSuccess++;
+			if (workerNames.indexOf(out.workerName) === -1) {
+				t.fail('workerName should have been seen on task event before');
+			}
+			if (countSuccess === 3) {
+				worker.removeListener('success', onSuccess);
+				const endDate = new Date();
+				t.true((endDate - startDate) / 1000 < 3.9);
+				t.true((endDate - startDate) / 1000 > 2);
+				worker.close(() => {
+					t.is(worker._poolers.length, 0);
+					resolve();
+				});
+			}
+		};
+
+		worker.on('success', onSuccess);
+		worker.on('task', onTask);
+		worker.on('error', reject);
+		stepFunctionPromises.startExecutionAsync(params1);
+		stepFunctionPromises.startExecutionAsync(params2);
+		stepFunctionPromises.startExecutionAsync(params3);
+	});
+});
+
+test.after(after);
+

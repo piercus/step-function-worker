@@ -1,3 +1,13 @@
 language: node_js
 node_js:
   - '6'
+install:
+  - npm install -g codecov nyc
+  - npm install
+
+script:
+  - npm run lint
+  - npm test
+
+after_success:
+  - npm run report-coverage
