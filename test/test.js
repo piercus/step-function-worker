@@ -105,7 +105,7 @@ const fn2 = function (event, callback, heartbeat) {
 
 test.before(before);
 
-test('Step function Activity Worker with 2 consecutive tasks', t => {
+test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 	const activityArn = context.activityArn;
 	const stateMachineArn = context.stateMachineArn;
 
@@ -153,7 +153,7 @@ test('Step function Activity Worker with 2 consecutive tasks', t => {
 	});
 });
 
-test('Step function with 3 concurrent worker', t => {
+test.serial('Step function with 3 concurrent worker', t => {
 	const activityArn = context.activityArn;
 	const stateMachineArn = context.stateMachineArn;
 
