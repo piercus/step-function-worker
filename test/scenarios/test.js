@@ -147,7 +147,6 @@ test.serial('Step function with 3 concurrent worker', t => {
 			if (countSuccess === 1) {
 				const report = worker.report();
 				t.is(report.length, 3);
-				t.is(report.filter(p => p.status === 'Task under going'), 2);
 			}
 			if (countSuccess === 3) {
 				worker.removeListener('success', onSuccess);
