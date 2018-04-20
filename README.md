@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.org/piercus/step-function-worker.svg?branch=master)](https://travis-ci.org/piercus/step-function-worker)
+
+[![codecov](https://codecov.io/gh/piercus/step-function-worker/branch/master/graph/badge.svg)](https://codecov.io/gh/piercus/step-function-worker)
+
 # step-function-worker
 Create a nodejs aws step-function worker/pooler easily :-)
 

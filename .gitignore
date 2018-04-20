@@ -1,8 +1,4 @@
 node_modules
 npm-debug.log
-<<<<<<< HEAD
-.nyc_output
-=======
 .nyc_output
 coverage
->>>>>>> develop
