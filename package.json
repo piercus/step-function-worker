@@ -4,9 +4,13 @@
   "description": "Easy AWS step function activity worker in node.js",
   "main": "index.js",
   "scripts": {
-    "test": "xo && node test/test.js"
+    "lint": "xo",
+    "test": "nyc ava test/scenarios/*",
+    "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
-  "engines" : { "node" : ">=6.0" },
+  "engines": {
+    "node": ">=6.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/piercus/step-function-worker.git"
@@ -25,8 +29,11 @@
   },
   "homepage": "https://github.com/piercus/step-function-worker#readme",
   "devDependencies": {
+    "ava": "^0.25.0",
     "bluebird": "^3.5.0",
+    "semantic-release": "^15.1.7",
     "vows": "^0.8.1",
+    "winston": "^2.4.1",
     "xo": "^0.18.2"
   },
   "dependencies": {
