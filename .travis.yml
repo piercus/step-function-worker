@@ -11,4 +11,9 @@ script:
 
 after_success:
   - npm run report-coverage
-  - npx -p node@8 -c "npm run semantic-release"
+  
+deploy:
+  provider: script
+  skip_cleanup: true
+  script:
+    - npx -p node@8 -c "npm run semantic-release"

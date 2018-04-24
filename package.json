@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "xo",
     "test": "nyc ava test/scenarios/*",
+    "semantic-release": "semantic-release",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
   "engines": {
