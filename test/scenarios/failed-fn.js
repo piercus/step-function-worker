@@ -1,14 +1,12 @@
 const test = require('ava').test;
 const AWS = require('aws-sdk');
-const PromiseBlue = require('bluebird');
 const winston = require('winston');
 
 const StepFunctionWorker = require('../../index.js');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
 
-const stepfunction = new AWS.StepFunctions();
-const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
+const stepFunction = new AWS.StepFunctions();
 
 const logger = new winston.Logger({
 	transports: [new winston.transports.Console({
@@ -83,7 +81,7 @@ test.serial('Step function Activity Worker with A failing worker', t => {
 		});
 
 		worker.on('success', reject);
-		stepFunctionPromises.startExecutionAsync(params);
+		stepFunction.startExecutionAsync(params).promise();
 	});
 });
 

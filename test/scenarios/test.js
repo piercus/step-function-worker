@@ -1,12 +1,10 @@
 const test = require('ava').test;
-const PromiseBlue = require('bluebird');
 const AWS = require('aws-sdk');
 const StepFunctionWorker = require('../../index.js');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
 
-const stepfunction = new AWS.StepFunctions();
-const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
+const stepFunction = new AWS.StepFunctions();
 const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 1000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 1000);
@@ -89,10 +87,10 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 				});
 			});
 
-			stepFunctionPromises.startExecutionAsync(params);
+			stepFunction.startExecutionAsync(params).promise();
 		});
 
-		stepFunctionPromises.startExecutionAsync(params);
+		stepFunction.startExecutionAsync(params).promise();
 	});
 });
 
@@ -163,9 +161,9 @@ test.serial('Step function with 3 concurrent worker', t => {
 		worker.on('success', onSuccess);
 		worker.on('task', onTask);
 		worker.on('error', reject);
-		stepFunctionPromises.startExecutionAsync(params1);
-		stepFunctionPromises.startExecutionAsync(params2);
-		stepFunctionPromises.startExecutionAsync(params3);
+		stepFunction.startExecutionAsync(params1).promise();
+		stepFunction.startExecutionAsync(params2).promise();
+		stepFunction.startExecutionAsync(params3).promise();
 	});
 });
 
