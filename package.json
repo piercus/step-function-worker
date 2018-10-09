@@ -37,6 +37,7 @@
     "xo": "^0.18.2"
   },
   "dependencies": {
+    "aws-arn-parser": "^1.0.0",
     "aws-sdk": "^2.82.0"
   }
 }
