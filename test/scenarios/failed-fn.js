@@ -81,7 +81,7 @@ test.serial('Step function Activity Worker with A failing worker', t => {
 		});
 
 		worker.on('success', reject);
-		stepFunction.startExecutionAsync(params).promise();
+		stepFunction.startExecution(params).promise();
 	});
 });
 

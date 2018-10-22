@@ -87,10 +87,10 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 				});
 			});
 
-			stepFunction.startExecutionAsync(params).promise();
+			stepFunction.startExecution(params).promise();
 		});
 
-		stepFunction.startExecutionAsync(params).promise();
+		stepFunction.startExecution(params).promise();
 	});
 });
 
@@ -161,9 +161,9 @@ test.serial('Step function with 3 concurrent worker', t => {
 		worker.on('success', onSuccess);
 		worker.on('task', onTask);
 		worker.on('error', reject);
-		stepFunction.startExecutionAsync(params1).promise();
-		stepFunction.startExecutionAsync(params2).promise();
-		stepFunction.startExecutionAsync(params3).promise();
+		stepFunction.startExecution(params1).promise();
+		stepFunction.startExecution(params2).promise();
+		stepFunction.startExecution(params3).promise();
 	});
 });
 

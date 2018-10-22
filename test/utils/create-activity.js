@@ -25,19 +25,21 @@ if (!stateMachineRoleArn) {
 
 module.exports = function ({context = {}, activityName, workerName, stateMachineName}) {
 	return stepFunction
-		.createActivityAsync({
+		.createActivity({
 			name: activityName
-		}).promise().bind(context).then(data => {
+		}).promise().then(data => {
 			context.activityArn = data.activityArn;
 			context.workerName = workerName;
 		}).then(function () {
 			const params = {
-				definition: JSON.stringify(stateMachineDefinition({activityArn: this.activityArn})), /* Required */
+				definition: JSON.stringify(stateMachineDefinition({activityArn: context.activityArn})), /* Required */
 				name: stateMachineName, /* Required */
 				roleArn: stateMachineRoleArn /* Required */
 			};
-			return stepFunction.createStateMachineAsync(params).promise();
+			return stepFunction.createStateMachine(params).promise();
 		}).then(data => {
 			context.stateMachineArn = data.stateMachineArn;
-		}).return(context);
+		}).then(() => {
+			return context
+		});
 };

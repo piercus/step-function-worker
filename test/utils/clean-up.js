@@ -9,14 +9,14 @@ module.exports = function ({
 	let p1;
 	let p2;
 	if (activityArn) {
-		p1 = stepFunction.deleteActivityAsync({
+		p1 = stepFunction.deleteActivity({
 			activityArn
 		}).promise();
 	} else {
 		p1 = Promise.resolve();
 	}
 	if (stateMachineArn) {
-		p2 = stepFunction.deleteStateMachineAsync({
+		p2 = stepFunction.deleteStateMachine({
 			stateMachineArn
 		}).promise();
 	} else {
