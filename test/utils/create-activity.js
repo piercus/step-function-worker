@@ -30,7 +30,7 @@ module.exports = function ({context = {}, activityName, workerName, stateMachine
 		}).promise().then(data => {
 			context.activityArn = data.activityArn;
 			context.workerName = workerName;
-		}).then(function () {
+		}).then(() => {
 			const params = {
 				definition: JSON.stringify(stateMachineDefinition({activityArn: context.activityArn})), /* Required */
 				name: stateMachineName, /* Required */
@@ -40,6 +40,6 @@ module.exports = function ({context = {}, activityName, workerName, stateMachine
 		}).then(data => {
 			context.stateMachineArn = data.stateMachineArn;
 		}).then(() => {
-			return context
+			return context;
 		});
 };
