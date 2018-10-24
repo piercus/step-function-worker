@@ -1,8 +1,6 @@
-const PromiseBlue = require('bluebird');
 const AWS = require('aws-sdk');
 
-const stepfunction = new AWS.StepFunctions();
-const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
+const stepFunction = new AWS.StepFunctions();
 
 const stateMachineDefinition = function (options) {
 	return {
@@ -26,20 +24,22 @@ if (!stateMachineRoleArn) {
 }
 
 module.exports = function ({context = {}, activityName, workerName, stateMachineName}) {
-	return stepFunctionPromises
-		.createActivityAsync({
+	return stepFunction
+		.createActivity({
 			name: activityName
-		}).bind(context).then(data => {
+		}).promise().then(data => {
 			context.activityArn = data.activityArn;
 			context.workerName = workerName;
-		}).then(function () {
+		}).then(() => {
 			const params = {
-				definition: JSON.stringify(stateMachineDefinition({activityArn: this.activityArn})), /* Required */
+				definition: JSON.stringify(stateMachineDefinition({activityArn: context.activityArn})), /* Required */
 				name: stateMachineName, /* Required */
 				roleArn: stateMachineRoleArn /* Required */
 			};
-			return stepFunctionPromises.createStateMachineAsync(params);
+			return stepFunction.createStateMachine(params).promise();
 		}).then(data => {
 			context.stateMachineArn = data.stateMachineArn;
-		}).return(context);
+		}).then(() => {
+			return context;
+		});
 };

@@ -1,8 +1,6 @@
-const PromiseBlue = require('bluebird');
 const AWS = require('aws-sdk');
 
-const stepfunction = new AWS.StepFunctions();
-const stepFunctionPromises = PromiseBlue.promisifyAll(stepfunction);
+const stepFunction = new AWS.StepFunctions();
 
 module.exports = function ({
 	activityArn = null,
@@ -11,16 +9,16 @@ module.exports = function ({
 	let p1;
 	let p2;
 	if (activityArn) {
-		p1 = stepFunctionPromises.deleteActivityAsync({
+		p1 = stepFunction.deleteActivity({
 			activityArn
-		});
+		}).promise();
 	} else {
 		p1 = Promise.resolve();
 	}
 	if (stateMachineArn) {
-		p2 = stepFunctionPromises.deleteStateMachineAsync({
+		p2 = stepFunction.deleteStateMachine({
 			stateMachineArn
-		});
+		}).promise();
 	} else {
 		p2 = Promise.resolve();
 	}
