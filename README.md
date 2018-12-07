@@ -34,6 +34,22 @@ var worker = new StepFunctionWorker({
   concurrency : 2 // default is 1
 });
 ```
+#### Set the Region
+
+By default, this package is built on top of `aws-sdk` so you should set your AWS Region by changing `AWS_REGION` environment variable.
+
+If you want to set it in JS code directly you can do it using `awsConfig` (see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html to see all available options) like 
+
+```
+var worker = new StepFunctionWorker({
+  activityArn : '<activity-ARN>',
+  workerName : 'workerName',
+  fn : fn,
+  awsConfig: {
+    region: '<your-region>'
+  }
+});
+```
 
 #### Close the worker
 
@@ -78,4 +94,6 @@ worker.on('error', function(err){
 ```
 
 ### Documentation
+
+See JSDoc in the code.
 
