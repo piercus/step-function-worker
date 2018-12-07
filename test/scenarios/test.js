@@ -1,6 +1,6 @@
-const test = require('ava').test;
+const {test} = require('ava');
 const AWS = require('aws-sdk');
-const StepFunctionWorker = require('../../index.js');
+const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
 
@@ -47,8 +47,7 @@ const fn2 = function (event, callback, heartbeat) {
 test.before(before);
 
 test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
-	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
+	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,
@@ -95,8 +94,7 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 });
 
 test.serial('Step function with 3 concurrent worker', t => {
-	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
+	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,

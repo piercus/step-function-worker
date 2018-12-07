@@ -1,7 +1,7 @@
-const test = require('ava').test;
+const {test} = require('ava');
 const winston = require('winston');
 
-const StepFunctionWorker = require('../../index.js');
+const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
 
@@ -42,7 +42,7 @@ const fn = function (event, callback, heartbeat) {
 test.before(before);
 
 test.serial('Step function Activity Workerhas a ready event', t => {
-	const activityArn = context.activityArn;
+	const {activityArn} = context;
 
 	return new Promise((resolve, reject) => {
 		const worker = new StepFunctionWorker({
