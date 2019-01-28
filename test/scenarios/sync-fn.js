@@ -1,6 +1,6 @@
 const test = require('ava').test;
 const AWS = require('aws-sdk');
-const StepFunctionWorker = require('../../index.js');
+const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
 

@@ -165,5 +165,51 @@ test.serial('Step function with 3 concurrent worker', t => {
 	});
 });
 
+test.serial('Restart the worker', t => {
+	const {activityArn, stateMachineArn} = context;
+
+	const worker = new StepFunctionWorker({
+		activityArn,
+		workerName: workerName + '-restart',
+		fn: fn2,
+		concurrency: 1
+	});
+	const params1 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '0'})
+	};
+	const params2 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '1'})
+	};
+	return new Promise((resolve, reject) => {
+		const countTask = 0;
+		let countSuccess = 0;
+		const workerNames = [];
+		const startDate = new Date();
+
+		const onSuccess = function (out) {
+			countSuccess++;
+			if (out.workerName === worker.workerName) {
+				t.fail('workerName should be same than in worker');
+			}
+			if (countSuccess === 1) {
+				const beforeRestartLength = worker._poolers.length;
+				worker.restart(() => {
+					t.is(worker._poolers.length, beforeRestartLength);
+					stepFunction.startExecution(params2).promise();
+				});
+			}
+			if (countSuccess === 2) {
+				resolve();
+			}
+		};
+
+		worker.on('success', onSuccess);
+		worker.on('error', reject);
+		stepFunction.startExecution(params1).promise();
+	});
+});
+
 test.after(after);
 
