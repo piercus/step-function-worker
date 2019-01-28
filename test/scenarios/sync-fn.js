@@ -1,4 +1,4 @@
-const test = require('ava').test;
+const {test} = require('ava');
 const AWS = require('aws-sdk');
 const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
@@ -39,8 +39,7 @@ const fnError = function () {
 test.before(before);
 
 test.serial('Step function Activity Worker with 2 consecutive synchronous tasks', t => {
-	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
+	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,
@@ -87,8 +86,7 @@ test.serial('Step function Activity Worker with 2 consecutive synchronous tasks'
 });
 
 test.serial('Step function Activity Worker with synchronous failing task', t => {
-	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
+	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,

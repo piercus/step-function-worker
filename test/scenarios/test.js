@@ -183,10 +183,7 @@ test.serial('Restart the worker', t => {
 		input: JSON.stringify({inputNumber: '1'})
 	};
 	return new Promise((resolve, reject) => {
-		const countTask = 0;
 		let countSuccess = 0;
-		const workerNames = [];
-		const startDate = new Date();
 
 		const onSuccess = function (out) {
 			countSuccess++;
