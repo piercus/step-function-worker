@@ -37,6 +37,7 @@
   },
   "dependencies": {
     "aws-arn-parser": "^1.0.0",
-    "aws-sdk": "^2.82.0"
+    "aws-sdk": "^2.82.0",
+    "bluebird": "^3.5.3"
   }
 }
