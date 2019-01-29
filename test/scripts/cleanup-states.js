@@ -51,6 +51,6 @@ const removeStateMachines = function (reg) {
 	});
 };
 
-removeStateMachines(reg).catch(err => {
-	logger.error(err);
+removeStateMachines(reg).catch(error => {
+	logger.error(error);
 });
