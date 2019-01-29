@@ -1,6 +1,6 @@
-const test = require('ava').test;
+const {test} = require('ava');
 const AWS = require('aws-sdk');
-const StepFunctionWorker = require('../../index.js');
+const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
 
@@ -47,8 +47,7 @@ const fn2 = function (event, callback, heartbeat) {
 test.before(before);
 
 test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
-	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
+	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,
@@ -95,8 +94,7 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 });
 
 test.serial('Step function with 3 concurrent worker', t => {
-	const activityArn = context.activityArn;
-	const stateMachineArn = context.stateMachineArn;
+	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,
@@ -164,6 +162,49 @@ test.serial('Step function with 3 concurrent worker', t => {
 		stepFunction.startExecution(params1).promise();
 		stepFunction.startExecution(params2).promise();
 		stepFunction.startExecution(params3).promise();
+	});
+});
+
+test.serial('Restart the worker', t => {
+	const {activityArn, stateMachineArn} = context;
+
+	const worker = new StepFunctionWorker({
+		activityArn,
+		workerName: workerName + '-restart',
+		fn: fn2,
+		concurrency: 1
+	});
+	const params1 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '0'})
+	};
+	const params2 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '1'})
+	};
+	return new Promise((resolve, reject) => {
+		let countSuccess = 0;
+
+		const onSuccess = function (out) {
+			countSuccess++;
+			if (out.workerName === worker.workerName) {
+				t.fail('workerName should be same than in worker');
+			}
+			if (countSuccess === 1) {
+				const beforeRestartLength = worker._poolers.length;
+				worker.restart(() => {
+					t.is(worker._poolers.length, beforeRestartLength);
+					stepFunction.startExecution(params2).promise();
+				});
+			}
+			if (countSuccess === 2) {
+				resolve();
+			}
+		};
+
+		worker.on('success', onSuccess);
+		worker.on('error', reject);
+		stepFunction.startExecution(params1).promise();
 	});
 });
 
