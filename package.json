@@ -36,6 +36,7 @@
   "homepage": "https://github.com/piercus/step-function-worker#readme",
   "devDependencies": {
     "ava": "^0.25.0",
+    "bluebird": "^3.5.3",
     "semantic-release": "^15.1.7",
     "winston": "^2.4.1",
     "xo": "^0.23.0"
