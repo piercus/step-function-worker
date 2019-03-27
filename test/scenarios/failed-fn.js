@@ -1,4 +1,4 @@
-const {test} = require('ava');
+const test = require('ava');
 const AWS = require('aws-sdk');
 const winston = require('winston');
 

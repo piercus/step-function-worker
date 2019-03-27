@@ -1,4 +1,4 @@
-const {test} = require('ava');
+const test = require('ava');
 const AWS = require('aws-sdk');
 const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
@@ -129,6 +129,7 @@ test.serial('Step function with 3 concurrent worker', t => {
 			if (workerNames.indexOf(task.workerName) === -1) {
 				workerNames.push(task.workerName);
 			}
+
 			if (countTask === 3) {
 				worker.removeListener('task', onTask);
 				t.is(workerNames.length, 3);
@@ -140,10 +141,12 @@ test.serial('Step function with 3 concurrent worker', t => {
 			if (workerNames.indexOf(out.workerName) === -1) {
 				t.fail('workerName should have been seen on task event before');
 			}
+
 			if (countSuccess === 1) {
 				const report = worker.report();
 				t.is(report.length, 3);
 			}
+
 			if (countSuccess === 3) {
 				worker.removeListener('success', onSuccess);
 				const endDate = new Date();
@@ -190,6 +193,7 @@ test.serial('Restart the worker', t => {
 			if (out.workerName === worker.workerName) {
 				t.fail('workerName should be same than in worker');
 			}
+
 			if (countSuccess === 1) {
 				const beforeRestartLength = worker._poolers.length;
 				worker.restart(() => {
@@ -197,6 +201,7 @@ test.serial('Restart the worker', t => {
 					stepFunction.startExecution(params2).promise();
 				});
 			}
+
 			if (countSuccess === 2) {
 				resolve();
 			}
