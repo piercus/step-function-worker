@@ -1,4 +1,4 @@
-const {test} = require('ava');
+const test = require('ava');
 const winston = require('winston');
 
 const StepFunctionWorker = require('../..');

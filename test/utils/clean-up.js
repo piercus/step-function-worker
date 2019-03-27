@@ -15,6 +15,7 @@ module.exports = function ({
 	} else {
 		p1 = Promise.resolve();
 	}
+
 	if (stateMachineArn) {
 		p2 = stepFunction.deleteStateMachine({
 			stateMachineArn
@@ -22,5 +23,6 @@ module.exports = function ({
 	} else {
 		p2 = Promise.resolve();
 	}
+
 	return Promise.all([p1, p2]);
 };

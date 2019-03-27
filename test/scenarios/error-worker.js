@@ -1,4 +1,4 @@
-const {test} = require('ava');
+const test = require('ava');
 
 process.on('uncaughtException', err => {
 	console.log('uncaughtException', err);

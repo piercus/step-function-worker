@@ -24,6 +24,7 @@ const onFirstActivityTask = function (err, data) {
 		console.log('in start execution', err, data); // An error occurred
 	});
 };
+
 const firstGetActivityTaskRequest = stepfunction.getActivityTask(paramsFirstGetActivity, onFirstActivityTask);
 setTimeout(() => {
 	firstGetActivityTaskRequest.abort();

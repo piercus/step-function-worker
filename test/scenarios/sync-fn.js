@@ -1,4 +1,4 @@
-const {test} = require('ava');
+const test = require('ava');
 const AWS = require('aws-sdk');
 const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');

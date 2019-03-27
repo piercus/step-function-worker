@@ -35,11 +35,11 @@
   },
   "homepage": "https://github.com/piercus/step-function-worker#readme",
   "devDependencies": {
-    "ava": "^0.25.0",
+    "ava": "^1.4.1",
     "bluebird": "^3.5.3",
-    "semantic-release": "^15.1.7",
+    "semantic-release": "^15.13.8",
     "winston": "^2.4.1",
-    "xo": "^0.23.0"
+    "xo": "^0.24.0"
   },
   "dependencies": {
     "aws-arn-parser": "^1.0.0",
