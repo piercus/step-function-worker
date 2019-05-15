@@ -1,9 +1,10 @@
 const test = require('ava');
 const AWS = require('aws-sdk');
+const winston = require('winston');
 const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
 const cleanUp = require('../utils/clean-up');
-const winston = require('winston');
+
 const stepFunction = new AWS.StepFunctions();
 const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 1000);
@@ -23,26 +24,27 @@ process.on('uncaughtException', err => {
 const context = {};
 
 const before = createActivity.bind(null, {
-	context, 
-	activityName, 
-	stateMachineName, 
+	context,
+	activityName,
+	stateMachineName,
 	workerName
 });
 const after = cleanUp.bind(null, context);
 
-const sentInput = function(i){
+const sentInput = function (i) {
 	return {
 		foo: 'bar',
 		index: i
-	};	
-}
+	};
+};
+
 const sentOutput = {foo2: 'bar2'};
 
 const taskDurationBase = 500;
 const fn = function (event, callback, heartbeat) {
 	heartbeat();
-	
-	const totalDuration = Math.ceil(Math.random()*taskDurationBase);
+
+	const totalDuration = Math.ceil(Math.random() * taskDurationBase);
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
 		heartbeat();
@@ -50,23 +52,23 @@ const fn = function (event, callback, heartbeat) {
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
 		heartbeat();
-	}, 2*totalDuration);
+	}, 2 * totalDuration);
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
 		heartbeat();
-	}, 3*totalDuration);
+	}, 3 * totalDuration);
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
 		heartbeat();
-	}, 4*totalDuration);
+	}, 4 * totalDuration);
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
 		heartbeat();
-	}, 5*totalDuration);	
+	}, 5 * totalDuration);
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
 		callback(null, sentOutput);
-	}, 6*totalDuration);
+	}, 6 * totalDuration);
 };
 
 test.before(before);
@@ -84,32 +86,33 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 		logger: new winston.Logger({
 			level: 'debug',
 			transports: [
-	      new (winston.transports.Console)({
-		      timestamp: function() {
-		        return (new Date()).toISOString().slice(11);
-		      },
-		      formatter: function(options) {
-		        // - Return string will be passed to logger.
-		        // - Optionally, use options.colorize(options.level, <string>) to
-		        //   colorize output based on the log level.
-		        return options.timestamp() + ' ' +
-		          winston.config.colorize(options.level, options.level.toUpperCase()) + ' ' +
-		          (options.message ? options.message : '') +
-		          (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
-		      }
-		    })
-	    ]
+				new (winston.transports.Console)({
+					timestamp() {
+						return (new Date()).toISOString().slice(11);
+					},
+					formatter(options) {
+						// - Return string will be passed to logger.
+						// - Optionally, use options.colorize(options.level, <string>) to
+						//   colorize output based on the log level.
+						return options.timestamp() + ' ' +
+							winston.config.colorize(options.level, options.level.toUpperCase()) + ' ' +
+							(options.message ? options.message : '') +
+							(options.meta && Object.keys(options.meta).length > 0 ? '\n\t' + JSON.stringify(options.meta) : '');
+					}
+				})
+			]
 		}),
 		poolConcurrency,
 		taskConcurrency
 	});
 
-	const params = function(i){
+	const params = function (i) {
 		return {
 			stateMachineArn,
 			input: JSON.stringify(sentInput(i))
 		};
 	};
+
 	let count = 0;
 	let countFull = 0;
 	worker.on('task', () => {
@@ -132,8 +135,8 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 				countFull,
 				totalTasks,
 				taskConcurrency
-			})
-			//t.is(Math.abs(countFull - (totalTasks-taskConcurrency))/totalTasks)
+			});
+			// T.is(Math.abs(countFull - (totalTasks-taskConcurrency))/totalTasks)
 			const endDate = new Date();
 			worker.logger.info(`Spent ${(endDate - startDate) / 1000} seconds`);
 			worker.close(() => {
@@ -146,4 +149,4 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 	});
 });
 
-//test.after(after);
+test.after(after);
