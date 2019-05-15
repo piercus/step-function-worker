@@ -130,6 +130,7 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 
 	return new Promise((resolve, reject) => {
 		worker.once('empty', () => {
+			console.log('worker empty');
 			t.is(count, totalTasks);
 			console.log({
 				countFull,
@@ -139,6 +140,7 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 			// T.is(Math.abs(countFull - (totalTasks-taskConcurrency))/totalTasks)
 			const endDate = new Date();
 			worker.logger.info(`Spent ${(endDate - startDate) / 1000} seconds`);
+			console.log('worker close');
 			worker.close(() => {
 				resolve();
 			});
