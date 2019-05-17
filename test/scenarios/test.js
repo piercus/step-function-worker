@@ -197,7 +197,9 @@ test.serial('Restart the worker', t => {
 
 			if (countSuccess === 1) {
 				const beforeRestartLength = worker._poolers.length;
+				console.log('restart');
 				worker.restart(() => {
+					console.log('restarted');
 					t.is(worker._poolers.length, beforeRestartLength);
 					stepFunction.startExecution(params2).promise();
 				});
