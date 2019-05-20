@@ -40,7 +40,7 @@ const sentInput = function (i) {
 
 const sentOutput = {foo2: 'bar2'};
 
-const taskDurationBase = 500;
+const taskDurationBase = 2000;
 const fn = function (event, callback, heartbeat) {
 	heartbeat();
 
