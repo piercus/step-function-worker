@@ -93,14 +93,14 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 	});
 });
 
-test.serial('Step function with 3 concurrent worker', t => {
+test.serial('Step function with 3 poolConcurrency worker', t => {
 	const {activityArn, stateMachineArn} = context;
 
 	const worker = new StepFunctionWorker({
 		activityArn,
-		workerName: workerName + '-concurrent',
+		workerName: workerName + '-poolConcurrency',
 		fn: fn2,
-		concurrency: 3
+		poolConcurrency: 3
 	});
 	const params1 = {
 		stateMachineArn,
@@ -144,7 +144,8 @@ test.serial('Step function with 3 concurrent worker', t => {
 
 			if (countSuccess === 1) {
 				const report = worker.report();
-				t.is(report.length, 3);
+				t.is(report.poolers.length, 3);
+				t.is(report.tasks.length, 0);
 			}
 
 			if (countSuccess === 3) {
@@ -175,7 +176,7 @@ test.serial('Restart the worker', t => {
 		activityArn,
 		workerName: workerName + '-restart',
 		fn: fn2,
-		concurrency: 1
+		poolConcurrency: 1
 	});
 	const params1 = {
 		stateMachineArn,
@@ -196,7 +197,9 @@ test.serial('Restart the worker', t => {
 
 			if (countSuccess === 1) {
 				const beforeRestartLength = worker._poolers.length;
+				console.log('restart');
 				worker.restart(() => {
+					console.log('restarted');
 					t.is(worker._poolers.length, beforeRestartLength);
 					stepFunction.startExecution(params2).promise();
 				});
