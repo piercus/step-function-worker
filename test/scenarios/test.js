@@ -169,6 +169,81 @@ test.serial('Step function with 3 poolConcurrency worker', t => {
 	});
 });
 
+test.serial('Step function with deprecated concurrency worker', t => {
+	const {activityArn, stateMachineArn} = context;
+
+	const worker = new StepFunctionWorker({
+		activityArn,
+		workerName: workerName + '-concurrency',
+		fn: fn2,
+		concurrency: 3
+	});
+	const params1 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '0'})
+	};
+	const params2 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '1'})
+	};
+	const params3 = {
+		stateMachineArn,
+		input: JSON.stringify({inputNumber: '2'})
+	};
+
+	return new Promise((resolve, reject) => {
+		let countTask = 0;
+		let countSuccess = 0;
+		const workerNames = [];
+		const startDate = new Date();
+		const onTask = function (task) {
+			// Task.taskToken
+			// task.input
+			// task.workerName
+			countTask++;
+
+			if (workerNames.indexOf(task.workerName) === -1) {
+				workerNames.push(task.workerName);
+			}
+
+			if (countTask === 3) {
+				worker.removeListener('task', onTask);
+				t.is(workerNames.length, 3);
+			}
+		};
+
+		const onSuccess = function (out) {
+			countSuccess++;
+			if (workerNames.indexOf(out.workerName) === -1) {
+				t.fail('workerName should have been seen on task event before');
+			}
+
+			if (countSuccess === 1) {
+				const report = worker.report();
+				t.is(report.poolers.length, 3);
+				t.is(report.tasks.length, 0);
+			}
+
+			if (countSuccess === 3) {
+				worker.removeListener('success', onSuccess);
+				const endDate = new Date();
+				t.true((endDate - startDate) / 1000 < 3.9);
+				t.true((endDate - startDate) / 1000 > 2);
+				worker.close(() => {
+					t.is(worker._poolers.length, 0);
+					resolve();
+				});
+			}
+		};
+
+		worker.on('success', onSuccess);
+		worker.on('task', onTask);
+		worker.on('error', reject);
+		stepFunction.startExecution(params1).promise();
+		stepFunction.startExecution(params2).promise();
+		stepFunction.startExecution(params3).promise();
+	});
+});
 test.serial('Restart the worker', t => {
 	const {activityArn, stateMachineArn} = context;
 

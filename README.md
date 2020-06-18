@@ -41,15 +41,15 @@ const worker = new StepFunctionWorker({
 
 Since version **3.0**, `concurrency` has been replaced by `poolConcurrency` and `taskConcurrency`.
 
-* `taskConcurrency` (`null` means Infinite)
-
-It represent the maximum number of parallel tasks done by the worker (default: `null`).
-
 * `poolConcurrency` is the maximum number of parallel getActivity, http request (see [`sdk.getActivity`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getActivityTask-property)) (default: `1`)
 
-Increase this to have a more responsive worker.
+Increase this to have a more responsive worker, decrease this to consume less http connections.
 
-Anyway, you should always have `poolConcurrency` < `taskConcurrency`.
+* `taskConcurrency` (`null` means Infinite)
+
+It represent the maximum number of parallel tasks done by the worker (default: equals to `poolConcurrency`).
+
+Anyway, you should always have `poolConcurrency` <= `taskConcurrency`.
 
 #### Set the Region
 
