@@ -15,8 +15,8 @@ const logger = new winston.Logger({
 });
 
 const workerName = 'test worker name';
-const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 1000);
-const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 1000);
+const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 100000);
+const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 100000);
 
 process.on('uncaughtException', err => {
 	console.log('uncaughtException', err);

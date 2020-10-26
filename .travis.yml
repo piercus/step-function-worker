@@ -1,8 +1,8 @@
 language: node_js
 node_js:
-  - '6'
+  - '12'
 install:
-  - npm install -g codecov nyc npx
+  - npm install -g codecov nyc
   - npm install
 
 script:
@@ -16,4 +16,4 @@ deploy:
   provider: script
   skip_cleanup: true
   script:
-    - npx -p node@8 -c "npm run semantic-release"
+    - npm run semantic-release
