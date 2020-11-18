@@ -37,7 +37,7 @@
   "devDependencies": {
     "ava": "^1.4.1",
     "bluebird": "^3.5.3",
-    "semantic-release": "^15.13.8",
+    "semantic-release": "^17.2.3",
     "winston": "^2.4.1",
     "xo": "^0.24.0"
   },
