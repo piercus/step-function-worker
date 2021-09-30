@@ -83,7 +83,7 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 		activityArn,
 		workerName: workerName + '-fn',
 		fn,
-		logger: new winston.Logger({
+		logger: winston.createLogger({
 			level: 'debug',
 			transports: [
 				new (winston.transports.Console)({

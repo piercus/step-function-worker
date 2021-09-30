@@ -5,7 +5,7 @@ const StepFunctionWorker = require('../../index.js');
 const createActivity = require('../utils/create-activity.js');
 const cleanUp = require('../utils/clean-up.js');
 
-const logger = new winston.Logger({
+const logger = winston.createLogger({
 	transports: [new winston.transports.Console({
 		level: 'debug'
 	})]
