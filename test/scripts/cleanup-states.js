@@ -17,11 +17,27 @@ const stepfunctions = new AWS.StepFunctions({
 
 const reg = /stateMachine:test-state-machine/;
 
+async function getStateMachineArns(reg) {
+	let nextToken;
+	let stateMachineArns = [];
+	do {
+		const data = await stepfunctions.listStateMachines({...nextToken && {nextToken}}).promise();
+
+		nextToken = data.nextToken;
+
+		stateMachineArns = [
+			...stateMachineArns,
+			...data.stateMachines
+				.map(stm => stm.stateMachineArn)
+				.filter(stmArn => reg.test(stmArn))
+		];
+	} while (nextToken);
+
+	return stateMachineArns;
+}
+
 const removeStateMachines = async function (reg) {
-	const {stateMachines} = await stepfunctions.listStateMachines({}).promise();
-	const stateMachineArns = stateMachines
-		.map(stm => stm.stateMachineArn)
-		.filter(stmArn => reg.test(stmArn));
+	const stateMachineArns = await getStateMachineArns(reg);
 
 	for (const stateMachineArn of stateMachineArns) {
 		const {definition: rawDefinition} = await stepfunctions.describeStateMachine({stateMachineArn}).promise();
@@ -29,10 +45,10 @@ const removeStateMachines = async function (reg) {
 		const activityArn = definition.States.FirstState.Resource;
 
 		await stepfunctions.deleteActivity({activityArn}).promise();
-		logger.info('Activity ', activityArn, ' was deleted');
+		logger.info(`Activity ${activityArn} was deleted`);
 
 		await stepfunctions.deleteStateMachine({stateMachineArn}).promise();
-		logger.info('StateMachine ', stateMachineArn, ' was deleted');
+		logger.info(`StateMachine ${stateMachineArn} was deleted`);
 	}
 };
 
