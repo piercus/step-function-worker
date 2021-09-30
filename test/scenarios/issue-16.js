@@ -1,17 +1,17 @@
 const test = require('ava');
 const AWS = require('aws-sdk');
 const winston = require('winston');
-const StepFunctionWorker = require('../..');
-const createActivity = require('../utils/create-activity');
-const cleanUp = require('../utils/clean-up');
+const StepFunctionWorker = require('../../index.js');
+const createActivity = require('../utils/create-activity.js');
+const cleanUp = require('../utils/clean-up.js');
 
 const stepFunction = new AWS.StepFunctions();
 const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 100000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 100000);
 
-process.on('uncaughtException', err => {
-	console.log('uncaughtException', err);
+process.on('uncaughtException', error => {
+	console.log('uncaughtException', error);
 });
 /*
 {
@@ -73,7 +73,7 @@ const fn = function (event, callback, heartbeat) {
 
 test.before(before);
 
-test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat', t => {
+test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat', async t => {
 	const {activityArn, stateMachineArn} = context;
 	const startDate = new Date();
 	const totalTasks = 10;
@@ -106,7 +106,7 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 		taskConcurrency
 	});
 
-	const params = function (i) {
+	const parameters = function (i) {
 		return {
 			stateMachineArn,
 			input: JSON.stringify(sentInput(i))
@@ -125,10 +125,10 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 	});
 	const promises = [];
 	for (let i = 0; i < totalTasks; i++) {
-		promises.push(stepFunction.startExecution(params(i)).promise());
+		promises.push(stepFunction.startExecution(parameters(i)).promise());
 	}
 
-	return new Promise((resolve, reject) => {
+	await new Promise((resolve, reject) => {
 		worker.once('empty', () => {
 			t.is(count, totalTasks);
 			t.true(countFull > 0);
@@ -141,7 +141,7 @@ test.serial('Step function Activity Worker with 200 parallel tasks and heartbeat
 		});
 		worker.on('error', reject);
 
-		return Promise.all(promises);
+		Promise.all(promises);
 	});
 });
 

@@ -1,9 +1,9 @@
 const test = require('ava');
 const winston = require('winston');
 
-const StepFunctionWorker = require('../..');
-const createActivity = require('../utils/create-activity');
-const cleanUp = require('../utils/clean-up');
+const StepFunctionWorker = require('../../index.js');
+const createActivity = require('../utils/create-activity.js');
+const cleanUp = require('../utils/clean-up.js');
 
 const logger = new winston.Logger({
 	transports: [new winston.transports.Console({
@@ -15,8 +15,8 @@ const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 100000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 100000);
 
-process.on('uncaughtException', err => {
-	console.log('uncaughtException', err);
+process.on('uncaughtException', error => {
+	console.log('uncaughtException', error);
 });
 /*
 {

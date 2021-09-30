@@ -2,9 +2,9 @@ const test = require('ava');
 const AWS = require('aws-sdk');
 const winston = require('winston');
 
-const StepFunctionWorker = require('../..');
-const createActivity = require('../utils/create-activity');
-const cleanUp = require('../utils/clean-up');
+const StepFunctionWorker = require('../../index.js');
+const createActivity = require('../utils/create-activity.js');
+const cleanUp = require('../utils/clean-up.js');
 
 const stepFunction = new AWS.StepFunctions();
 
@@ -18,8 +18,8 @@ const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 100000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 100000);
 
-process.on('uncaughtException', err => {
-	console.log('uncaughtException', err);
+process.on('uncaughtException', error => {
+	console.log('uncaughtException', error);
 });
 /*
 {
@@ -39,9 +39,9 @@ const sentInput = {foo: 'bar'};
 const fnError = function (event, callback, heartbeat) {
 	heartbeat();
 	setTimeout(() => {
-		const err = new Error('custom error');
+		const error = new Error('custom error');
 		// Assert.equal(event, sentInput);
-		callback(err);
+		callback(error);
 	}, 2000);
 };
 
@@ -59,7 +59,7 @@ test.serial('Step function Activity Worker with A failing worker', t => {
 
 	return new Promise((resolve, reject) => {
 		let expectedTaskToken;
-		const params = {
+		const parameters = {
 			stateMachineArn,
 			input: JSON.stringify(sentInput)
 		};
@@ -80,7 +80,7 @@ test.serial('Step function Activity Worker with A failing worker', t => {
 		});
 
 		worker.on('success', reject);
-		stepFunction.startExecution(params).promise();
+		stepFunction.startExecution(parameters).promise();
 	});
 });
 

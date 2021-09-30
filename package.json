@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "lint": "xo",
+    "lint:fix": "xo --fix",
     "test": "nyc ava test/scenarios/*",
     "semantic-release": "semantic-release",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
   "engines": {
-    "node": ">=6.0"
+    "node": ">=12.0"
   },
   "repository": {
     "type": "git",
@@ -30,19 +31,21 @@
   },
   "xo": {
     "rules": {
-      "ava/use-test": 1
+      "ava/use-test": 1,
+      "ava/no-import-test-files": ["error", {"files": ["test/scenarios/**/*.js", "test/examples/**/*.js", "test/scripts/**/*.js"]}],
+      "no-await-in-loop": 0
     }
   },
   "homepage": "https://github.com/piercus/step-function-worker#readme",
   "devDependencies": {
-    "ava": "^1.4.1",
-    "bluebird": "^3.5.3",
+    "ava": "^3.15.0",
     "semantic-release": "^17.2.3",
-    "winston": "^2.4.1",
-    "xo": "^0.24.0"
+    "winston": "^3.3.3",
+    "nyc": "^15.1.0",
+    "xo": "^0.39.0"
   },
   "dependencies": {
-    "aws-arn-parser": "^1.0.0",
-    "aws-sdk": "^2.82.0"
+    "aws-arn-parser": "^1.0.1",
+    "aws-sdk": "^2.997.0"
   }
 }

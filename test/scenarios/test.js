@@ -1,16 +1,16 @@
 const test = require('ava');
 const AWS = require('aws-sdk');
-const StepFunctionWorker = require('../..');
-const createActivity = require('../utils/create-activity');
-const cleanUp = require('../utils/clean-up');
+const StepFunctionWorker = require('../../index.js');
+const createActivity = require('../utils/create-activity.js');
+const cleanUp = require('../utils/clean-up.js');
 
 const stepFunction = new AWS.StepFunctions();
 const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 100000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 100000);
 
-process.on('uncaughtException', err => {
-	console.log('uncaughtException', err);
+process.on('uncaughtException', error => {
+	console.log('uncaughtException', error);
 });
 /*
 {
@@ -40,7 +40,7 @@ const fn2 = function (event, callback, heartbeat) {
 	heartbeat();
 	setTimeout(() => {
 		// Assert.equal(event, sentInput);
-		callback(null, Object.assign({}, event, sentOutput));
+		callback(null, {...event, ...sentOutput});
 	}, 2000);
 };
 
@@ -57,7 +57,7 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 
 	return new Promise((resolve, reject) => {
 		let expectedTaskToken;
-		const params = {
+		const parameters = {
 			stateMachineArn,
 			input: JSON.stringify(sentInput)
 		};
@@ -86,10 +86,10 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 				});
 			});
 
-			stepFunction.startExecution(params).promise();
+			stepFunction.startExecution(parameters).promise();
 		});
 
-		stepFunction.startExecution(params).promise();
+		stepFunction.startExecution(parameters).promise();
 	});
 });
 
@@ -102,15 +102,15 @@ test.serial('Step function with 3 poolConcurrency worker', t => {
 		fn: fn2,
 		poolConcurrency: 3
 	});
-	const params1 = {
+	const parameters1 = {
 		stateMachineArn,
 		input: JSON.stringify({inputNumber: '0'})
 	};
-	const params2 = {
+	const parameters2 = {
 		stateMachineArn,
 		input: JSON.stringify({inputNumber: '1'})
 	};
-	const params3 = {
+	const parameters3 = {
 		stateMachineArn,
 		input: JSON.stringify({inputNumber: '2'})
 	};
@@ -126,7 +126,7 @@ test.serial('Step function with 3 poolConcurrency worker', t => {
 			// task.workerName
 			countTask++;
 
-			if (workerNames.indexOf(task.workerName) === -1) {
+			if (!workerNames.includes(task.workerName)) {
 				workerNames.push(task.workerName);
 			}
 
@@ -138,7 +138,7 @@ test.serial('Step function with 3 poolConcurrency worker', t => {
 
 		const onSuccess = function (out) {
 			countSuccess++;
-			if (workerNames.indexOf(out.workerName) === -1) {
+			if (!workerNames.includes(out.workerName)) {
 				t.fail('workerName should have been seen on task event before');
 			}
 
@@ -163,9 +163,9 @@ test.serial('Step function with 3 poolConcurrency worker', t => {
 		worker.on('success', onSuccess);
 		worker.on('task', onTask);
 		worker.on('error', reject);
-		stepFunction.startExecution(params1).promise();
-		stepFunction.startExecution(params2).promise();
-		stepFunction.startExecution(params3).promise();
+		stepFunction.startExecution(parameters1).promise();
+		stepFunction.startExecution(parameters2).promise();
+		stepFunction.startExecution(parameters3).promise();
 	});
 });
 
@@ -178,11 +178,11 @@ test.serial('Restart the worker', t => {
 		fn: fn2,
 		poolConcurrency: 1
 	});
-	const params1 = {
+	const parameters1 = {
 		stateMachineArn,
 		input: JSON.stringify({inputNumber: '0'})
 	};
-	const params2 = {
+	const parameters2 = {
 		stateMachineArn,
 		input: JSON.stringify({inputNumber: '1'})
 	};
@@ -201,7 +201,7 @@ test.serial('Restart the worker', t => {
 				worker.restart(() => {
 					console.log('restarted');
 					t.is(worker._poolers.length, beforeRestartLength);
-					stepFunction.startExecution(params2).promise();
+					stepFunction.startExecution(parameters2).promise();
 				});
 			}
 
@@ -212,7 +212,7 @@ test.serial('Restart the worker', t => {
 
 		worker.on('success', onSuccess);
 		worker.on('error', reject);
-		stepFunction.startExecution(params1).promise();
+		stepFunction.startExecution(parameters1).promise();
 	});
 });
 

@@ -1,16 +1,16 @@
 const test = require('ava');
 const AWS = require('aws-sdk');
-const StepFunctionWorker = require('../..');
-const createActivity = require('../utils/create-activity');
-const cleanUp = require('../utils/clean-up');
+const StepFunctionWorker = require('../../index.js');
+const createActivity = require('../utils/create-activity.js');
+const cleanUp = require('../utils/clean-up.js');
 
 const stepFunction = new AWS.StepFunctions();
 const workerName = 'test worker name';
 const stateMachineName = 'test-state-machine-' + Math.floor(Math.random() * 100000);
 const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 100000);
 
-process.on('uncaughtException', err => {
-	console.log('uncaughtException', err);
+process.on('uncaughtException', error => {
+	console.log('uncaughtException', error);
 });
 /*
 {
@@ -49,7 +49,7 @@ test.serial('Step function Activity Worker with 2 consecutive synchronous tasks'
 
 	return new Promise((resolve, reject) => {
 		let expectedTaskToken;
-		const params = {
+		const parameters = {
 			stateMachineArn,
 			input: JSON.stringify(sentInput)
 		};
@@ -78,10 +78,10 @@ test.serial('Step function Activity Worker with 2 consecutive synchronous tasks'
 				});
 			});
 
-			stepFunction.startExecution(params).promise();
+			stepFunction.startExecution(parameters).promise();
 		});
 
-		stepFunction.startExecution(params).promise();
+		stepFunction.startExecution(parameters).promise();
 	});
 });
 
@@ -96,7 +96,7 @@ test.serial('Step function Activity Worker with synchronous failing task', t => 
 
 	return new Promise((resolve, reject) => {
 		let expectedTaskToken;
-		const params = {
+		const parameters = {
 			stateMachineArn,
 			input: JSON.stringify(sentInput)
 		};
@@ -115,7 +115,7 @@ test.serial('Step function Activity Worker with synchronous failing task', t => 
 			});
 		});
 		worker.once('success', reject);
-		stepFunction.startExecution(params).promise();
+		stepFunction.startExecution(parameters).promise();
 	});
 });
 test.after(after);

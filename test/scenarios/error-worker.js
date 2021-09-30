@@ -1,11 +1,11 @@
 const test = require('ava');
 
-process.on('uncaughtException', err => {
-	console.log('uncaughtException', err);
+process.on('uncaughtException', error => {
+	console.log('uncaughtException', error);
 });
 
 const workerName = 'test worker name';
-const StepFunctionWorker = require('../..');
+const StepFunctionWorker = require('../../index.js');
 
 test.serial('Step function Activity Worker worker without fn', t => {
 	const error = t.throws(() => {
