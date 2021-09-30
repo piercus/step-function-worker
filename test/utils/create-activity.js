@@ -24,11 +24,11 @@ if (!stateMachineRoleArn) {
 }
 
 module.exports = async function ({context = {}, activityName, workerName, stateMachineName}) {
-	const { activityArn } = await stepFunction.createActivity({name: activityName}).promise()
+	const {activityArn} = await stepFunction.createActivity({name: activityName}).promise();
 	const {stateMachineArn} = stepFunction.createStateMachine({
 		definition: JSON.stringify(stateMachineDefinition({activityArn})), /* Required */
 		name: stateMachineName, /* Required */
-		roleArn: stateMachineRoleArn /* Required */ 
+		roleArn: stateMachineRoleArn /* Required */
 	}).promise();
 	context.activityArn = activityArn;
 	context.workerName = workerName;
