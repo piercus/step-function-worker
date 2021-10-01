@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "xo",
     "lint:fix": "xo --fix",
-    "test": "nyc ava test/scenarios/*",
+    "test": "nyc ava test/scenarios/* --timeout 60000",
     "semantic-release": "semantic-release",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
@@ -32,7 +32,16 @@
   "xo": {
     "rules": {
       "ava/use-test": 1,
-      "ava/no-import-test-files": ["error", {"files": ["test/scenarios/**/*.js", "test/examples/**/*.js", "test/scripts/**/*.js"]}],
+      "ava/no-import-test-files": [
+        "error",
+        {
+          "files": [
+            "test/scenarios/**/*.js",
+            "test/examples/**/*.js",
+            "test/scripts/**/*.js"
+          ]
+        }
+      ],
       "no-await-in-loop": 0
     }
   },

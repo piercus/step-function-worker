@@ -41,7 +41,7 @@ const fn = function (event, callback, heartbeat) {
 
 test.before(before);
 
-test.serial('Step function Activity Workerhas a ready event', t => {
+test.serial('Step function Activity Worker has a ready event', t => {
 	const {activityArn} = context;
 
 	return new Promise((resolve, reject) => {
