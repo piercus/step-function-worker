@@ -1,4 +1,5 @@
 const test = require('ava');
+const winston = require('winston');
 const AWS = require('aws-sdk');
 const StepFunctionWorker = require('../..');
 const createActivity = require('../utils/create-activity');
@@ -11,6 +12,11 @@ const activityName = 'test-step-function-worker-' + Math.floor(Math.random() * 1
 
 process.on('uncaughtException', err => {
 	console.log('uncaughtException', err);
+});
+const logger = new winston.Logger({
+	transports: [new winston.transports.Console({
+		level: 'debug'
+	})]
 });
 /*
 {
@@ -51,6 +57,7 @@ test.serial('Step function Activity Worker with 2 consecutive tasks', t => {
 
 	const worker = new StepFunctionWorker({
 		activityArn,
+		logger,
 		workerName: workerName + '-fn',
 		fn
 	});
@@ -98,6 +105,7 @@ test.serial('Step function with 3 poolConcurrency worker', t => {
 
 	const worker = new StepFunctionWorker({
 		activityArn,
+		logger,
 		workerName: workerName + '-poolConcurrency',
 		fn: fn2,
 		poolConcurrency: 3
@@ -174,6 +182,7 @@ test.serial('Step function with deprecated concurrency worker', t => {
 
 	const worker = new StepFunctionWorker({
 		activityArn,
+		logger,
 		workerName: workerName + '-concurrency',
 		fn: fn2,
 		concurrency: 3
@@ -249,6 +258,7 @@ test.serial('Restart the worker', t => {
 
 	const worker = new StepFunctionWorker({
 		activityArn,
+		logger,
 		workerName: workerName + '-restart',
 		fn: fn2,
 		poolConcurrency: 1
@@ -272,9 +282,9 @@ test.serial('Restart the worker', t => {
 
 			if (countSuccess === 1) {
 				const beforeRestartLength = worker._poolers.length;
-				console.log('restart');
+				logger.debug('restart');
 				worker.restart(() => {
-					console.log('restarted');
+					logger.debug('restarted');
 					t.is(worker._poolers.length, beforeRestartLength);
 					stepFunction.startExecution(params2).promise();
 				});
