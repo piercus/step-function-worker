@@ -14,6 +14,6 @@ test.serial('Step function Activity Worker worker without fn', t => {
 			workerName: workerName + '-fn'
 		});
 	});
-	t.is(error.message, 'worker does not define any function');
+	t.is(error.message, 'fn parameter should be a function (currently undefined)');
 });
 

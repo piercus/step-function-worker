@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "xo",
-    "test": "nyc ava test/scenarios/*",
+    "test": "nyc ava test/scenarios/* --timeout 5m",
     "semantic-release": "semantic-release",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov"
   },
@@ -33,11 +33,15 @@
       "ava/use-test": 1
     }
   },
+  "ava": {
+    "timeout": 120000
+  },
   "homepage": "https://github.com/piercus/step-function-worker#readme",
   "devDependencies": {
-    "ava": "^1.4.1",
+    "ava": "^3.15.0",
     "bluebird": "^3.5.3",
-    "semantic-release": "^15.13.8",
+    "nyc": "^15.1.0",
+    "semantic-release": "^17.2.3",
     "winston": "^2.4.1",
     "xo": "^0.24.0"
   },
