@@ -40,13 +40,13 @@ const worker = new StepFunctionWorker({
 
 Since version **3.0**, `concurrency` has been replaced by `poolConcurrency` and `taskConcurrency`.
 
+see more information in https://github.com/piercus/step-function-worker/issues/16#issuecomment-486971866
+
 * `poolConcurrency` is the maximum number of parallel getActivity, http request (see [`sdk.getActivity`](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/StepFunctions.html#getActivityTask-property)) (default: `1`)
 
 Increase this to have a more responsive worker, decrease this to consume less http connections.
 
-* `taskConcurrency` (`null` means Infinite)
-
-It represent the maximum number of parallel tasks done by the worker (default: equals to `poolConcurrency`).
+* `taskConcurrency` (`null` means Infinite) represents the maximum number of parallel tasks done by the worker (default: equals to `poolConcurrency`).
 
 Anyway, you should always have `poolConcurrency` <= `taskConcurrency`.
 
